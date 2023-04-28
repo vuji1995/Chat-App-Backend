@@ -56,6 +56,7 @@ router.post("/signup", async (req, res, next) => {
   }
 });
 
+router.get(`/welcome`, userController.welcome);
 router.post(`/login`, userController.login);
 router.get(`/protectedRoute`, userController.protectedRoute);
 router.post(`/forgotPassword`, userController.forgotPassword);

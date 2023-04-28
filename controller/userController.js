@@ -28,6 +28,10 @@ const signInToken = (id) => {
   });
 };
 
+exports.welcome = async (req, res, next) => {
+  res.send(`Welcome to my server`);
+};
+
 exports.login = async (req, res, next) => {
   if (typeof req.body !== "object") {
     return res
