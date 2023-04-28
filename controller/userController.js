@@ -38,7 +38,7 @@ exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(200).json({
+    return res.status(400).json({
       status: "failed",
       message: "Please provide email and password!",
     });
@@ -47,7 +47,7 @@ exports.login = async (req, res, next) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return res.status(200).json({
+    return res.status(400).json({
       status: "failed",
       message: "Email or password are incorrect!",
     });
@@ -72,7 +72,7 @@ exports.protectedRoute = async (req, res, next) => {
   }
 
   if (!token) {
-    return res.status(401).json({
+    return res.status(400).json({
       status: "failed",
       message: "Invalid token",
     });
@@ -99,14 +99,11 @@ exports.protectedRoute = async (req, res, next) => {
         user_id: freshUser._id,
         email: freshUser.email,
         name: freshUser.name,
+        phone: freshUser.phone,
+        role: freshUser.role,
       },
     });
   } catch (error) {
-    /*
-    return res.status(401).json({
-      status: "failed",
-      message: "Invalid token",
-    });*/
     return res.redirect("http://localhost:3000/");
   }
 };
@@ -123,9 +120,7 @@ exports.forgotPassword = async (req, res, next) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  const resetURL = `${req.protocol}://${req.get(
-    "host"
-  )}/resetPassword/${resetToken}`;
+  const resetURL = `http://localhost:3000/resetPassword/${resetToken}`;
 
   const message = `Forgot password? Submit a PATCH request with your new password and password confirm to ${resetURL}.\ If you didn't forgot your password please ignore this email.`;
 
@@ -143,7 +138,7 @@ exports.forgotPassword = async (req, res, next) => {
     user.createPasswordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
-    res.status(400).json({
+    res.status(500).json({
       status: "error",
       message: `${error}`,
     });
@@ -162,28 +157,28 @@ exports.resetPassword = async (req, res, next) => {
   });
 
   if (!user || user === undefined) {
-    return res.status(500).json({
+    return res.status(400).json({
       status: "failed",
       message: "Token is expired or invalid!",
     });
   }
 
-  if (!req.body.password || !req.body.passwordConfirm) {
+  if (!req.body.passwords.password || !req.body.passwords.passwordConfirm) {
     return res.status(400).json({
       status: "failed",
       message: "Please provide both password and passwordConfirm!",
     });
   }
 
-  if (req.body.password !== req.body.passwordConfirm) {
+  if (req.body.passwords.password !== req.body.passwords.passwordConfirm) {
     return res.status(400).json({
       status: "failed",
       message: "Please provide same password and passwordConfirm!",
     });
   }
 
-  user.password = req.body.password;
-  user.passwordConfirm = req.body.passwordConfirm;
+  user.password = req.body.passwords.password;
+  user.passwordConfirm = req.body.passwords.passwordConfirm;
   user.passwordResetExpires = undefined;
   user.passwordResetToken = undefined;
   await user.save();
@@ -197,24 +192,13 @@ exports.resetPassword = async (req, res, next) => {
   });
 };
 
-exports.testServer = async (req, res, next) => {
-  const data = req.body;
-  res.status(200).json({
-    status: "success",
-    message: "password changed",
-    data,
-  });
-};
-
 exports.uploadProfileIMG = async (req, res, next) => {
   multer.single("profilePicture")(req, res, (err) => {
     if (err) {
-      console.error(err);
-      return res.status(400).json({ error: "Error uploading file" });
+      return res.status(500).json({ error: "Error uploading file" });
     }
 
     if (!req.file) {
-      console.error("No file received");
       return res.status(400).json({ error: "No file received" });
     }
 
@@ -233,8 +217,10 @@ exports.uploadProfileIMG = async (req, res, next) => {
       .replace(/[,]/g, "")
       .replace(/[\s:]/g, "-");
 
-    const email = req.body.email;
-    const blob = bucket.file(`${email}-${timeStamp}-${req.file.originalname}`);
+    const user_id = req.body.user_id;
+    const blob = bucket.file(
+      `${user_id}-${timeStamp}-${req.file.originalname}`
+    );
     const blobStream = blob.createWriteStream();
 
     blobStream.on("error", (err) => {
@@ -253,40 +239,56 @@ exports.uploadProfileIMG = async (req, res, next) => {
 };
 
 exports.getProfileImage = async (req, res, next) => {
-  let imageUrl = `test`;
-  console.log(req.body);
-  const prefix = `${req.body.email}-`;
+  try {
+    let imageUrl = ``;
 
-  const [files] = await storage.bucket(bucket.name).getFiles({
-    prefix: prefix,
-  });
+    const prefix = `${req.body.user_id}-`;
 
-  if (files.length > 0) {
-    // sort the files by creation time (newest first)
-    const sortedFiles = files.sort((a, b) => {
-      return b.metadata.timeCreated - a.metadata.timeCreated;
+    const [files] = await storage.bucket(bucket.name).getFiles({
+      prefix: prefix,
     });
 
-    // get the URL of the newest file
-    const newestFile = sortedFiles[0];
-    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${newestFile.name}`;
+    if (files.length > 0) {
+      // sort the files by creation time (newest first)
+      const sortedFiles = files.sort((a, b) => {
+        return b.metadata.timeCreated - a.metadata.timeCreated;
+      });
 
-    res.status(200).json({
-      status: "success",
-      body: {
-        imageUrl,
-      },
+      // get the URL of the newest file
+      const newestFile = sortedFiles[sortedFiles.length - 1];
+
+      let imageUrl = `https://storage.googleapis.com/${bucket.name}/${newestFile.name}`;
+
+      res.status(200).json({
+        status: "success",
+        body: {
+          imageUrl,
+        },
+      });
+    }
+
+    if (files.length === 0) {
+      imageUrl = `https://storage.googleapis.com/profile_images_storage/anony.png`;
+      res.status(200).json({
+        status: "success",
+        body: {
+          imageUrl,
+        },
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: error,
     });
   }
 };
 
 exports.getUserData = async (req, res, next) => {
-  console.log(req.body);
   const user_id = req.body.id;
 
   try {
     const user = await User.findById(user_id);
-    console.log(user);
     res.status(200).json({
       status: "success",
       data: {
@@ -297,6 +299,51 @@ exports.getUserData = async (req, res, next) => {
     res.status(500).json({
       status: "failed",
       error,
+    });
+  }
+};
+
+exports.getOtherUserProfileImage = async (req, res, next) => {
+  try {
+    let imageUrl = ``;
+    const prefix = `${req.body.user_id}-`;
+
+    const [files] = await storage.bucket(bucket.name).getFiles({
+      prefix: prefix,
+    });
+
+    if (files.length > 0) {
+      // sort the files by creation time (newest first)
+      const sortedFiles = files.sort((a, b) => {
+        return b.metadata.timeCreated - a.metadata.timeCreated;
+      });
+
+      // get the URL of the newest file
+      const newestFile = sortedFiles[sortedFiles.length - 1];
+
+      let imageUrl = `https://storage.googleapis.com/${bucket.name}/${newestFile.name}`;
+
+      res.status(200).json({
+        status: "success",
+        body: {
+          imageUrl,
+        },
+      });
+    }
+
+    if (files.length === 0) {
+      imageUrl = `https://storage.googleapis.com/profile_images_storage/anony.png`;
+      res.status(200).json({
+        status: "success",
+        body: {
+          imageUrl,
+        },
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: error,
     });
   }
 };

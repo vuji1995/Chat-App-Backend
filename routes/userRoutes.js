@@ -4,9 +4,6 @@ const userController = require(`../controller/userController`);
 const jwt = require(`jsonwebtoken`);
 const User = require(`../model/userModel`);
 
-//SIGN UP
-//router.post(`/signup`, userController.signup);
-
 const signInToken = (id) => {
   return jwt.sign({ id }, process.env.SECRET_STRING, {
     expiresIn: process.env.EXPIRES_IN,
@@ -24,7 +21,6 @@ router.post("/signup", async (req, res, next) => {
 
   const phoneNumberExists = await User.findOne({ phone: req.body.phone });
   if (phoneNumberExists) {
-    console.log(phoneNumberExists);
     return res.status(400).json({
       status: "failed",
       message: "Phone number already exists",
@@ -52,9 +48,8 @@ router.post("/signup", async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.log(error);
     const errorMessage = error.message;
-    res.status(400).json({
+    res.status(500).json({
       status: "failed",
       message: errorMessage,
     });
@@ -63,11 +58,15 @@ router.post("/signup", async (req, res, next) => {
 
 router.post(`/login`, userController.login);
 router.get(`/protectedRoute`, userController.protectedRoute);
-router.get(`/forgotPassword`, userController.forgotPassword);
+router.post(`/forgotPassword`, userController.forgotPassword);
 router.patch(`/resetPassword/:token`, userController.resetPassword);
 router.post(`/dashboard`, userController.protectedRoute);
 router.post(`/uploadProfileIMG`, userController.uploadProfileIMG);
 router.post(`/getProfileImage`, userController.getProfileImage);
+router.post(
+  `/getOtherUserProfileImage`,
+  userController.getOtherUserProfileImage
+);
 router.post(`/getUserData`, userController.getUserData);
 
 module.exports = router;
