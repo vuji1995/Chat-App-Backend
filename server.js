@@ -1,10 +1,13 @@
 const PORT = process.env.PORT || 6001;
 const dotenv = require(`dotenv`);
 dotenv.config({ path: `./config.env` });
-const app = require(`../backend/app`);
+const path = require("path");
+const app = require(path.join(__dirname, "../backend/app"));
 const mongoose = require(`mongoose`);
 
 const DB = process.env.MONGO_URL.replace(`<PASSWORD>`, process.env.PASSWORD);
+
+console.log(app);
 
 mongoose
   .connect(DB, {})
