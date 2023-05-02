@@ -1,8 +1,9 @@
-const User = require(`../model/userModel`);
+const path = require("path");
+const User = require(path.join(__dirname, "../model/userModel"));
 const jwt = require(`jsonwebtoken`);
 const { promisify } = require(`util`);
 const crypto = require(`crypto`);
-const sendEmail = require(`../utils/email`);
+const sendEmail = require(path.join(__dirname, "../utils/email"));
 
 //GOOGLE CLOUD IMAGE SAVING
 const { Storage } = require("@google-cloud/storage");
@@ -243,10 +244,12 @@ exports.uploadProfileIMG = async (req, res, next) => {
 };
 
 exports.getProfileImage = async (req, res, next) => {
+  console.log(req.body);
   try {
     let imageUrl = ``;
 
     const prefix = `${req.body.user_id}-`;
+    console.log(prefix);
 
     const [files] = await storage.bucket(bucket.name).getFiles({
       prefix: prefix,
@@ -281,9 +284,13 @@ exports.getProfileImage = async (req, res, next) => {
       });
     }
   } catch (error) {
+    imageUrl = `https://storage.googleapis.com/profile_images_storage/anony.png`;
     res.status(500).json({
       status: "failed",
       message: error,
+      body: {
+        imageUrl,
+      },
     });
   }
 };
@@ -348,6 +355,9 @@ exports.getOtherUserProfileImage = async (req, res, next) => {
     res.status(500).json({
       status: "failed",
       message: error,
+      body: {
+        imageUrl: `https://storage.googleapis.com/profile_images_storage/anony.png`,
+      },
     });
   }
 };

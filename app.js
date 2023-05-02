@@ -1,12 +1,20 @@
+const path = require("path");
 const express = require(`express`);
 const app = express();
-const userRouter = require(`../backend/routes/userRoutes`);
-const chatRouter = require(`../backend/routes/ChatRoutes`);
-const messageRouter = require(`../backend/routes/MessageRoutes`);
+const userRouter = require(path.join(__dirname, "/routes/userRoutes.js"));
+const chatRouter = require(path.join(__dirname, "/routes/ChatRoutes.js"));
+const messageRouter = require(path.join(__dirname, "/routes/messageRoutes.js"));
 const cors = require(`cors`);
 const bodyParser = require(`body-parser`);
 
 //MIDLEWARE
+
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 
 app.use(bodyParser.json());
 
@@ -17,13 +25,6 @@ app.use((err, req, res, next) => {
     next();
   }
 });
-
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
 
 //ROUTES
 app.use(`/`, userRouter);

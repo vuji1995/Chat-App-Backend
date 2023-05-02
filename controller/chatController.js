@@ -1,5 +1,6 @@
-const chatModel = require(`../model/chatModel`);
-const User = require(`../model/userModel`);
+const path = require("path");
+const chatModel = require(path.join(__dirname, "../model/chatModel"));
+const User = require(path.join(__dirname, "../model/userModel"));
 
 exports.createChat = async (req, res) => {
   const { receiverID } = req.body;

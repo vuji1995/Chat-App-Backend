@@ -1,4 +1,5 @@
-const MessageModel = require(`../model/MessageModel`);
+const path = require("path");
+const MessageModel = require(path.join(__dirname, "../model/MessageModel"));
 
 exports.addMessage = async (req, res) => {
   const chatId = req.body.message.chatId;
