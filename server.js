@@ -31,5 +31,3 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`Aplikacija radi na portu broj ${PORT}`);
 });
-
-console.log(process.cwd());
