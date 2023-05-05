@@ -1,28 +1,15 @@
-const nodemailer = require(`nodemailer`);
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.EMAIL_API_KEY);
 
 const sendMail = async (options) => {
-  //1. Create transporter
-  const transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-
   const mailOptions = {
-    from: "Antonio <sef.bgp@gmail.com>",
+    from: "Chat App <chatappmail2023@gmail.com>",
     to: options.email,
     text: options.message,
     subject: options.subject,
   };
 
-  await transporter.sendMail(mailOptions);
+  await sgMail.send(mailOptions);
 };
 
 module.exports = sendMail;

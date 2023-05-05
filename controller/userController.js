@@ -109,7 +109,7 @@ exports.protectedRoute = async (req, res, next) => {
       },
     });
   } catch (error) {
-    return res.redirect("http://localhost:3000/");
+    return res.redirect("https://chat-app-frontend-flame.vercel.app/");
   }
 };
 
@@ -125,9 +125,8 @@ exports.forgotPassword = async (req, res, next) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  const resetURL = `http://localhost:3000/resetPassword/${resetToken}`;
-
-  const message = `Forgot password? Submit a PATCH request with your new password and password confirm to ${resetURL}.\ If you didn't forgot your password please ignore this email.`;
+  const resetURL = `https://chat-app-frontend-flame.vercel.app/resetPassword/${resetToken}`;
+  const message = `Forgot password? Submit a PATCH request with your new password and password confirm to ${resetURL} \ If you didn't forgot your password please ignore this email.`;
 
   try {
     await sendEmail({
@@ -151,6 +150,7 @@ exports.forgotPassword = async (req, res, next) => {
 };
 
 exports.resetPassword = async (req, res, next) => {
+  console.log(req.params.token);
   const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)

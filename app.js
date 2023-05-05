@@ -3,7 +3,7 @@ const express = require(`express`);
 const app = express();
 const userRouter = require(path.join(__dirname, "/routes/userRoutes.js"));
 const chatRouter = require(path.join(__dirname, "/routes/ChatRoutes.js"));
-const messageRouter = require(path.join(__dirname, "/routes/messageRoutes.js"));
+const messageRouter = require(path.join(__dirname, "/routes/MessageRoutes.js"));
 const cors = require(`cors`);
 const bodyParser = require(`body-parser`);
 
