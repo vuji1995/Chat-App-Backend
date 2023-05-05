@@ -244,24 +244,20 @@ exports.uploadProfileIMG = async (req, res, next) => {
 };
 
 exports.getProfileImage = async (req, res, next) => {
-  console.log(req.body);
   try {
     let imageUrl = ``;
 
     const prefix = `${req.body.user_id}-`;
-    console.log(prefix);
 
     const [files] = await storage.bucket(bucket.name).getFiles({
       prefix: prefix,
     });
 
     if (files.length > 0) {
-      // sort the files by creation time (newest first)
       const sortedFiles = files.sort((a, b) => {
         return b.metadata.timeCreated - a.metadata.timeCreated;
       });
 
-      // get the URL of the newest file
       const newestFile = sortedFiles[sortedFiles.length - 1];
 
       let imageUrl = `https://storage.googleapis.com/${bucket.name}/${newestFile.name}`;
@@ -284,6 +280,7 @@ exports.getProfileImage = async (req, res, next) => {
       });
     }
   } catch (error) {
+    console.log(error);
     imageUrl = `https://storage.googleapis.com/profile_images_storage/anony.png`;
     res.status(500).json({
       status: "failed",
